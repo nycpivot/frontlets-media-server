@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DeploymentFiles", "DeploymentFiles", "{3A2E5784-3F67-4AEB-BCEF-4598C3628B7D}"
+	ProjectSection(SolutionItems) = preProject
+		Frontlets.Media.Server\Frontlets.Media.Server.service = Frontlets.Media.Server\Frontlets.Media.Server.service
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Frontlets.Media.Server", "Frontlets.Media.Server\Frontlets.Media.Server.csproj", "{C2FC0703-10CD-4DEE-BA07-387B944458AF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C2FC0703-10CD-4DEE-BA07-387B944458AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2FC0703-10CD-4DEE-BA07-387B944458AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2FC0703-10CD-4DEE-BA07-387B944458AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2FC0703-10CD-4DEE-BA07-387B944458AF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {26FF8F5B-0BB3-4AEC-9CB6-C1485CBD74A9}
+	EndGlobalSection
+EndGlobal
