@@ -128,7 +128,9 @@ namespace Frontlets.Media.Server
 
                 MoveToPlaylist(catalogItem);
 
-                if (counter % 5 == 0)
+                var chapterCount = FileHelper.ChaptersToRead(catalogItem.FileName);
+
+                if (counter % chapterCount == 0)
                 {
                     //AddHymns(3);
                     //AddDevotions(1);
