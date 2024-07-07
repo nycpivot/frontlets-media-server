@@ -16,7 +16,7 @@
 
             //var bookNumber = filename.Substring(0, 3);
 
-            //switch(bookNumber)
+            //switch (bookNumber)
             //{
             //    case "002": // exodus
             //    case "004": // numbers
@@ -28,6 +28,17 @@
             //    case "003": // leviticus
             //    case "007": // judges
             //        chaptersToRead = 3;
+            //        break;
+            //    case "009": // i samuel
+            //        if (filename == "009029")
+            //        {
+            //            chaptersToRead = 3;
+            //        }
+            //        else
+            //        {
+            //            chaptersToRead = 4;
+            //        }
+
             //        break;
             //}
 

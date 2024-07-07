@@ -135,7 +135,7 @@ namespace Frontlets.Media.Server
                     //AddHymns(3);
                     //AddDevotions(1);
 
-                    AddClassical(2);
+                    AddClassical(8);
                     //AddTreasure(1);
                     //AddHymns(8);
                     //AddDevotions(1);
