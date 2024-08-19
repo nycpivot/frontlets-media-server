@@ -18,20 +18,25 @@ namespace Frontlets.Media.Server
 
         private AmazonS3Client storageClient;
 
-        private readonly string KJV_CHRISTOPHER = "mp4-bible-kjv-chapters-christopher";
+        private readonly string KJV_CHRISTOPHER_OT = "mp4-bible-kjv-chapters-christopher-ot";
+        private readonly string KJV_CHRISTOPHER_NT = "mp4-bible-kjv-chapters-christopher-nt";
         //private readonly string KJV_ALEXANDER_SCOURBY = "mp3-bible-kjv-alexander-scourby";
         //private readonly string KJV_AUDIO_TREASURE = "mp3-bible-kjv-audio-treasure";
         //private readonly string DEVOTIONS = "mp3-devotions";
-        private readonly string CLASSICAL = "mp4-classical";
-        //private readonly string MASTERPIECES = "media-audio-mp3-classical-millenium-masterpieces";
-        //private readonly string MISCELLANEOUS = "media-audio-mp3-classical-miscellaneous";
-        //private readonly string HYMNS = "media-audio-mp3-hymns";
+        private readonly string CLASSICAL_1 = "mp4-classical-1";
+        private readonly string CLASSICAL_2 = "mp4-classical-2";
+        private readonly string CLASSICAL_3 = "mp4-classical-3";
+        private readonly string HYMNS_1 = "mp4-hymns-1";
         //private readonly string THEMES = "media-audio-mp3-themes";
+
+        private readonly string KJV_CHRISTOPHER = "kjv-christopher";
+        private readonly string CLASSICAL_HYMNS = "classical-hymns";
 
         Random random = new Random();
 
-        private readonly IList<CatalogItem> catalog = new List<CatalogItem>();
-        private readonly IList<CatalogItem> playlist = new List<CatalogItem>();
+        private readonly List<CatalogItem> storage = new List<CatalogItem>();
+        private readonly List<CatalogItem> catalog = new List<CatalogItem>();
+        private readonly List<CatalogItem> playlist = new List<CatalogItem>();
 
         public Worker(ILogger<Worker> logger)
         {
@@ -64,27 +69,28 @@ namespace Frontlets.Media.Server
 
         void Run()
         {
-            GetFiles();
+            GenerateCatalog();
             GeneratePlaylist();
             BeginStreaming();
         }
 
-        void GetFiles()
+        void GenerateCatalog()
         {
             var containers = new List<string>()
             {
-                KJV_CHRISTOPHER,
+                KJV_CHRISTOPHER_OT,
+                KJV_CHRISTOPHER_NT,
                 //KJV_ALEXANDER_SCOURBY,
                 //KJV_AUDIO_TREASURE,
                 //DEVOTIONS,
-                CLASSICAL,
-                //MASTERPIECES,
-                //MISCELLANEOUS,
-                //HYMNS,
+                CLASSICAL_1,
+                CLASSICAL_2,
+                CLASSICAL_3,
+                HYMNS_1,
                 //THEMES
             };
 
-            catalog.Clear();
+            storage.Clear();
             playlist.Clear();
 
             foreach (var container in containers)
@@ -104,52 +110,131 @@ namespace Frontlets.Media.Server
                         var slashIndex = obj.Key.IndexOf("/");
                         var filename = obj.Key.Substring(slashIndex + 1);
 
-                        catalog.Add(new CatalogItem() { Type = container, Key = obj.Key, FileName = filename });
+                        storage.Add(new CatalogItem() { Type = container, Key = obj.Key, FileName = filename });
                     }
                 }
             }
+
+            var kjvChristopherFilesOt = storage.Where(s => s.Type == KJV_CHRISTOPHER_OT)
+                .Select(s => new CatalogItem() { Type = KJV_CHRISTOPHER, Key = s.Key, FileName = s.FileName })
+                .OrderBy(f => f.FileName)
+                .ToList();
+
+            var kjvChristopherFilesNt = storage.Where(s => s.Type == KJV_CHRISTOPHER_NT)
+                .Select(s => new CatalogItem() { Type = KJV_CHRISTOPHER, Key = s.Key, FileName = s.FileName })
+                .OrderBy(f => f.FileName)
+                .ToList();
+
+            var classical1 = storage.Where(s => s.Type == CLASSICAL_1)
+                .Select(s => new CatalogItem() { Type = CLASSICAL_HYMNS, Key = s.Key, FileName = s.FileName })
+                .ToList();
+
+            var classical2 = storage.Where(s => s.Type == CLASSICAL_2)
+                .Select(s => new CatalogItem() { Type = CLASSICAL_HYMNS, Key = s.Key, FileName = s.FileName })
+                .ToList();
+
+            var classical3 = storage.Where(s => s.Type == CLASSICAL_3)
+                .Select(s => new CatalogItem() { Type = CLASSICAL_HYMNS, Key = s.Key, FileName = s.FileName })
+                .ToList();
+
+            var hymns1 = storage.Where(s => s.Type == HYMNS_1)
+                .Select(s => new CatalogItem() { Type = CLASSICAL_HYMNS, Key = s.Key, FileName = s.FileName })
+                .ToList();
+
+            catalog.AddRange(kjvChristopherFilesOt);
+            catalog.AddRange(kjvChristopherFilesNt);
+            catalog.AddRange(classical1);
+            catalog.AddRange(classical2);
+            catalog.AddRange(classical3);
+            catalog.AddRange(hymns1);
         }
 
         void GeneratePlaylist()
         {
-            //var kjvChristopher = Path.Combine(mediaDirectory.FullName, KJV_CHRISTOPHER);
-            //var kjvChristopherDirectory = new DirectoryInfo(kjvChristopher);
-            var kjvChristopherFiles = catalog.Where(c => c.Type == KJV_CHRISTOPHER)
-                .OrderBy(f => f.FileName)
-                .ToList();
-
-            // MOVE KJV CHRISTOPHER 5 FILES AT A TIME
-            for (int ctr = 0; ctr < kjvChristopherFiles.Count; ctr++)
+            for(var bookNumber = 1; bookNumber <= 66; bookNumber++)
             {
-                var catalogItem = kjvChristopherFiles[ctr];
-                var counter = ctr + 1;
+                var skip = 0;
+                var take = FileHelper.GetChapterCount(bookNumber);
 
-                //var kjvChristopherFile = new FileInfo(kjvChristopherFiles[kjv1].FullName);
+                 var chapters = catalog.Where(
+                    b => b.Type == KJV_CHRISTOPHER && FileHelper.GetBookNumber(b.FileName) == bookNumber).ToList();
 
-                MoveToPlaylist(catalogItem);
-
-                var chapterCount = FileHelper.ChaptersToRead(catalogItem.FileName);
-
-                if (counter % chapterCount == 0)
-                {
-                    //AddHymns(3);
-                    //AddDevotions(1);
-
-                    AddClassical(8);
-                    //AddTreasure(1);
-                    //AddHymns(8);
-                    //AddDevotions(1);
-                    //AddMiscellaneous(1);
-                    //AddScourby(1);
-                    //AddMasterpiece(1);
-                    //AddHymns(2);
-                }
+                AddChapters(chapters, skip, take);
             }
+
+            foreach(var item in playlist)
+            {
+                Debug.WriteLine(item.FileName);
+            }
+
+            //// MOVE KJV CHRISTOPHER 5 FILES AT A TIME
+            //for (int ctr = 0; ctr < catalog.Count; ctr++)
+            //{
+            //    var catalogItem = catalog[ctr];
+            //    var bookNumber = FileHelper.GetBookNumber(catalogItem.FileName);
+
+
+
+
+            //    var counter = ctr + 1;
+
+            //    //var kjvChristopherFile = new FileInfo(kjvChristopherFiles[kjv1].FullName);
+
+            //    MoveToPlaylist(catalogItem);
+
+            //    var chapterCount = FileHelper.ChaptersToRead(catalogItem.FileName);
+
+            //    if (counter % chapterCount == 0)
+            //    {
+            //        //AddHymns(3);
+            //        //AddDevotions(1);
+
+            //        AddClassical(8);
+            //        //AddTreasure(1);
+            //        //AddHymns(8);
+            //        //AddDevotions(1);
+            //        //AddMiscellaneous(1);
+            //        //AddScourby(1);
+            //        //AddMasterpiece(1);
+            //        //AddHymns(2);
+            //    }
+            //}
         }
 
-        void AddClassical(int count)
+        void AddChapters(List<CatalogItem> chapters, int skip, int take)
         {
-            var currentCount = catalog.Count(c => c.Type == CLASSICAL);
+            var batch = chapters.Skip(skip).Take(take);
+            
+            foreach(var chapter in batch)
+            {
+                MoveToPlaylist(chapter);
+            }
+
+            AddMusic(8);
+
+            var total = skip + take;
+
+            if (total == chapters.Count)
+            {
+                return;
+            }
+            else
+            {
+                var remainder = chapters.Count % take;
+                if (chapters.Count - total == remainder)
+                {
+                    AddChapters(chapters, total, remainder);
+
+                    return;
+                }
+            }
+
+            AddChapters(chapters, total, take);
+        }
+
+        void AddMusic(int count)
+        {
+            var currentCount = catalog.Count(c => c.Type == CLASSICAL_HYMNS);
 
             if (currentCount < count) // reload
             {
@@ -164,7 +249,7 @@ namespace Frontlets.Media.Server
                 //    catalog.Add(new CatalogItem() { Type = CLASSICAL, Name = blob.Name, Url = blobUrl });
                 //}
 
-                currentCount = catalog.Count(c => c.Type == CLASSICAL);
+                currentCount = catalog.Count(c => c.Type == CLASSICAL_HYMNS);
             }
 
             if (currentCount > 0)
@@ -176,16 +261,57 @@ namespace Frontlets.Media.Server
 
                 foreach (var rnd in rnds)
                 {
-                    var catalogItem = catalog.Where(c => c.Type == CLASSICAL).ToList()[rnd];
+                    var catalogItem = catalog.Where(c => c.Type == CLASSICAL_HYMNS).ToList()[rnd];
 
                     MoveToPlaylist(catalogItem);
                 }
 
-                foreach (var rnd in rnds.OrderByDescending(r => r))
-                {
-                    catalog.Where(c => c.Type == CLASSICAL).ToList().RemoveAt(rnd);
-                }
+                //foreach (var rnd in rnds.OrderByDescending(r => r))
+                //{
+                //    catalog.Where(c => c.Type == CLASSICAL_HYMNS).ToList().RemoveAt(rnd);
+                //}
             }
+        }
+
+        void AddClassical(int count)
+        {
+            //var currentCount = catalog.Count(c => c.Type == CLASSICAL);
+
+            //if (currentCount < count) // reload
+            //{
+            //    //var containerClient = storageClient.GetBlobContainerClient(CLASSICAL);
+
+            //    //foreach (var blob in containerClient.GetBlobs())
+            //    //{
+            //    //    Console.WriteLine($"{CLASSICAL}/{blob.Name}");
+
+            //    //    var blobUrl = $"{containerClient.Uri}/{blob.Name}";
+
+            //    //    catalog.Add(new CatalogItem() { Type = CLASSICAL, Name = blob.Name, Url = blobUrl });
+            //    //}
+
+            //    currentCount = catalog.Count(c => c.Type == CLASSICAL);
+            //}
+
+            //if (currentCount > 0)
+            //{
+            //    var rnds = Enumerable.Range(0, currentCount - 1)
+            //        .OrderBy(r => random.Next(currentCount - 1))
+            //        .Take(count)
+            //        .ToList();
+
+            //    foreach (var rnd in rnds)
+            //    {
+            //        var catalogItem = catalog.Where(c => c.Type == CLASSICAL).ToList()[rnd];
+
+            //        MoveToPlaylist(catalogItem);
+            //    }
+
+            //    foreach (var rnd in rnds.OrderByDescending(r => r))
+            //    {
+            //        catalog.Where(c => c.Type == CLASSICAL).ToList().RemoveAt(rnd);
+            //    }
+            //}
         }
 
         void MoveToPlaylist(CatalogItem catalogItem)
