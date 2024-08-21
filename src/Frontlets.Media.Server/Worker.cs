@@ -380,6 +380,14 @@ namespace Frontlets.Media.Server
                     file.WriteResponseStreamToFileAsync(
                         @$"/home/ubuntu/playlist/{catalogItem.FileName}", false, new CancellationToken()).Wait();
                 }
+                else
+                {
+                    File.AppendAllText("/home/ubuntu/log.txt", "File failed to load: " + catalogItem.FileName);
+
+                    continue;
+                }
+
+                File.AppendAllText("/home/ubuntu/playlist.txt", catalogItem.FileName);
 
                 var args = $"-re -i \"/home/ubuntu/playlist/{catalogItem.FileName}\" -vcodec libx264 -preset ultrafast -maxrate 3000k -b:v 2500k -bufsize 600k -pix_fmt yuv420p -g 60 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -s 1280x720 rtmp://{ipAddress.ToString()}/live/stream";
 
