@@ -1,5 +1,7 @@
 using Amazon.S3;
 using Amazon.S3.Model;
+using System.Collections;
+using System.Data;
 using System.Diagnostics;
 using System.Net;
 
@@ -22,11 +24,13 @@ namespace Frontlets.Media.Server
         private readonly string KJV_CHRISTOPHER_NT = "mp4-bible-kjv-chapters-christopher-nt";
         //private readonly string KJV_ALEXANDER_SCOURBY = "mp3-bible-kjv-alexander-scourby";
         //private readonly string KJV_AUDIO_TREASURE = "mp3-bible-kjv-audio-treasure";
-        //private readonly string DEVOTIONS = "mp3-devotions";
+        private readonly string DEVOTIONS_1 = "mp4-devotions-1";
+        private readonly string DEVOTIONS_2 = "mp4-devotions-2";
         private readonly string CLASSICAL_1 = "mp4-classical-1";
         private readonly string CLASSICAL_2 = "mp4-classical-2";
         private readonly string CLASSICAL_3 = "mp4-classical-3";
         private readonly string HYMNS_1 = "mp4-hymns-1";
+        private readonly string DYNAMIC = "dynamic";
         //private readonly string THEMES = "media-audio-mp3-themes";
 
         private readonly string KJV_CHRISTOPHER = "kjv-christopher";
@@ -82,7 +86,8 @@ namespace Frontlets.Media.Server
                 KJV_CHRISTOPHER_NT,
                 //KJV_ALEXANDER_SCOURBY,
                 //KJV_AUDIO_TREASURE,
-                //DEVOTIONS,
+                DEVOTIONS_1,
+                DEVOTIONS_2,
                 CLASSICAL_1,
                 CLASSICAL_2,
                 CLASSICAL_3,
@@ -125,6 +130,16 @@ namespace Frontlets.Media.Server
                 .OrderBy(f => f.FileName)
                 .ToList();
 
+            var devotions1 = storage.Where(s => s.Type == DEVOTIONS_1)
+                .Select(s => new CatalogItem() { Type = DEVOTIONS_1, Key = s.Key, FileName = s.FileName })
+                .OrderBy(f => f.FileName)
+                .ToList();
+
+            var devotions2 = storage.Where(s => s.Type == DEVOTIONS_2)
+                .Select(s => new CatalogItem() { Type = DEVOTIONS_2, Key = s.Key, FileName = s.FileName })
+                .OrderBy(f => f.FileName)
+                .ToList();
+
             var classical1 = storage.Where(s => s.Type == CLASSICAL_1)
                 .Select(s => new CatalogItem() { Type = CLASSICAL_HYMNS, Key = s.Key, FileName = s.FileName })
                 .ToList();
@@ -143,6 +158,8 @@ namespace Frontlets.Media.Server
 
             catalog.AddRange(kjvChristopherFilesOt);
             catalog.AddRange(kjvChristopherFilesNt);
+            catalog.AddRange(devotions1);
+            catalog.AddRange(devotions2);
             catalog.AddRange(classical1);
             catalog.AddRange(classical2);
             catalog.AddRange(classical3);
@@ -164,6 +181,10 @@ namespace Frontlets.Media.Server
 
             foreach(var item in playlist)
             {
+                if(String.IsNullOrWhiteSpace(item.FileName))
+                {
+                    Debugger.Break();
+                }
                 Debug.WriteLine(item.FileName);
             }
 
@@ -211,6 +232,10 @@ namespace Frontlets.Media.Server
             }
 
             AddMusic(8);
+            AddDevotion();
+            AddMusic(5);
+            AddDevotion();
+            AddMusic(6);
 
             var total = skip + take;
 
@@ -269,6 +294,146 @@ namespace Frontlets.Media.Server
                 //foreach (var rnd in rnds.OrderByDescending(r => r))
                 //{
                 //    catalog.Where(c => c.Type == CLASSICAL_HYMNS).ToList().RemoveAt(rnd);
+                //}
+            }
+        }
+
+        void AddDynamic()
+        {
+            //this is supposed to choose spurgeon morning or evening based on the current time of day
+            playlist.Add(new CatalogItem() { Type = DYNAMIC });
+        }
+
+        void AddDevotion(DateTime date)
+        {
+            var month =  String.Empty;
+            var day = String.Empty;
+
+            if(date.Month >= 1 && date.Month <= 9)
+            {
+                month = $"0{date.Month}";
+            }
+            else if(date.Month >= 10)
+            {
+                month = date.Month.ToString();
+            }
+
+            if(date.Day >=  1 && date.Day <= 9)
+            {
+                day = $"0{date.Day}";
+            }
+            else if(date.Day >= 10)
+            {
+                day = date.Day.ToString();
+            }
+
+            var morningPrefix = "spurgeon-morning";
+            var eveningPrefix = "spurgeon-evening";
+
+            var catalogItem = new CatalogItem();
+
+            if(DateTime.Now.Hour <= 12)
+            {
+                var startsWithText = $"{morningPrefix}-{month}";
+                var morningPrefixLength = startsWithText.Length;
+
+                catalogItem = catalog.Single(
+                    c => c.FileName.StartsWith(startsWithText) 
+                    && c.FileName.Substring(morningPrefixLength, 2) == day);
+            }
+            else if(DateTime.Now.Hour > 12)
+            {
+                var startsWithText = $"{eveningPrefix}-{month}";
+                var eveningPrefixLength = startsWithText.Length;
+
+                catalogItem = catalog.Single(
+                    c => c.FileName.StartsWith(startsWithText)
+                    && c.FileName.Substring(eveningPrefixLength + 1, 2) == day);
+            }
+
+            MoveToPlaylist(catalogItem);
+
+
+
+            
+            //var daily = catalog.Where(c => c.FileName == "spurgeon-evening-01.01.pm.mp4");
+
+            //var dailyDevotions = catalog.Where(
+            //    c => c.FileName.StartsWith(month) && c.FileName.Substring(3, 2) == day);
+
+            //var morningDevotion = dailyDevotions.First(c => c.FileName.Substring(6, 2) == "am");
+            //var eveningDevotion = dailyDevotions.First(c => c.FileName.Substring(6, 2) == "pm");
+
+            var currentCount = catalog.Count(c => c.Type == DEVOTIONS_1);
+
+            if (currentCount < 1) // reload
+            {
+                //var containerClient = storageClient.GetBlobContainerClient(CLASSICAL);
+
+                //foreach (var blob in containerClient.GetBlobs())
+                //{
+                //    Console.WriteLine($"{CLASSICAL}/{blob.Name}");
+
+                //    var blobUrl = $"{containerClient.Uri}/{blob.Name}";
+
+                //    catalog.Add(new CatalogItem() { Type = CLASSICAL, Name = blob.Name, Url = blobUrl });
+                //}
+
+                currentCount = catalog.Count(c => c.Type == DEVOTIONS_1);
+            }
+
+            if (currentCount > 0)
+            {
+                //var rnd = Enumerable.Range(0, currentCount - 1)
+                //    .OrderBy(r => random.Next(currentCount - 1))
+                //    .Take(1)
+                //    .Single();
+
+                //var catalogItem = catalog.Where(c => c.Type == DEVOTIONS_1).ToList()[rnd];
+
+                //MoveToPlaylist(catalogItem);
+
+                ////foreach (var rnd in rnds.OrderByDescending(r => r))
+                ////{
+                ////    catalog.Where(c => c.Type == DEVOTIONS).ToList().RemoveAt(rnd);
+                ////}
+            }
+        }
+
+        void AddDevotion()
+        {
+            var currentCount = catalog.Count(c => c.Type == DEVOTIONS_2);
+
+            if (currentCount < 1) // reload
+            {
+                //var containerClient = storageClient.GetBlobContainerClient(CLASSICAL);
+
+                //foreach (var blob in containerClient.GetBlobs())
+                //{
+                //    Console.WriteLine($"{CLASSICAL}/{blob.Name}");
+
+                //    var blobUrl = $"{containerClient.Uri}/{blob.Name}";
+
+                //    catalog.Add(new CatalogItem() { Type = CLASSICAL, Name = blob.Name, Url = blobUrl });
+                //}
+
+                currentCount = catalog.Count(c => c.Type == DEVOTIONS_2);
+            }
+
+            if (currentCount > 0)
+            {
+                var rnd = Enumerable.Range(0, currentCount - 1)
+                    .OrderBy(r => random.Next(currentCount - 1))
+                    .Take(1)
+                    .Single();
+
+                var catalogItem = catalog.Where(c => c.Type == DEVOTIONS_2).ToList()[rnd];
+
+                MoveToPlaylist(catalogItem);
+
+                //foreach (var rnd in rnds.OrderByDescending(r => r))
+                //{
+                //    catalog.Where(c => c.Type == DEVOTIONS).ToList().RemoveAt(rnd);
                 //}
             }
         }
@@ -367,10 +532,16 @@ namespace Frontlets.Media.Server
 
             foreach (var catalogItem in playlist)
             {
+                var key = catalogItem.Key;
+                //if(catalogItem.Type == DYNAMIC)
+                //{
+                //    key = Get
+                //}
+
                 var objectRequest = new GetObjectRequest()
                 {
                     BucketName = "frontlets-media",
-                    Key = catalogItem.Key
+                    Key = key
                 };
 
                 var file = storageClient.GetObjectAsync(objectRequest).Result;
@@ -382,12 +553,15 @@ namespace Frontlets.Media.Server
                 }
                 else
                 {
-                    File.AppendAllText("/home/ubuntu/log.txt", "File failed to load: " + catalogItem.FileName);
+                    File.AppendAllText("/home/ubuntu/log.txt", $"File failed to load: {catalogItem.FileName}");
 
                     continue;
                 }
 
-                File.AppendAllText("/home/ubuntu/playlist.txt", catalogItem.FileName);
+                var playlistLog = new StreamWriter("/home/ubuntu/playlist.txt");
+                playlistLog.WriteLine($"{catalogItem.FileName}\t\t\t${DateTime.Now}");
+
+                //File.AppendAllText("/home/ubuntu/playlist.txt", $"{catalogItem.FileName}\n");
 
                 var args = $"-re -i \"/home/ubuntu/playlist/{catalogItem.FileName}\" -vcodec libx264 -preset ultrafast -maxrate 3000k -b:v 2500k -bufsize 600k -pix_fmt yuv420p -g 60 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -s 1280x720 rtmp://{ipAddress.ToString()}/live/stream";
 
