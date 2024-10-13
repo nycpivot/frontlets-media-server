@@ -439,62 +439,71 @@ namespace Frontlets.Media.Server
 
             foreach (var catalogItem in playlist)
             {
-                var objectRequest = new GetObjectRequest();
-                objectRequest.BucketName = BUCKET_NAME;
+                try
+                {
+                    var objectRequest = new GetObjectRequest();
+                    objectRequest.BucketName = BUCKET_NAME;
 
-                if (catalogItem.Type != DYNAMIC_DEVOTION)
-                {
-                    objectRequest.Key = catalogItem.Key;
-                }
-                else
-                {
-                    if (DateTime.Today.Month == 2 && DateTime.Today.Day == 29)
+                    if (catalogItem.Type == DYNAMIC_DEVOTION)
                     {
+                        if (DateTime.Today.Month == 2 && DateTime.Today.Day == 29)
+                        {
+                            continue;
+                        }
+
+                        var dynamicCatalogItem = GetDynamicDevotionKey();
+                        catalogItem.Key = dynamicCatalogItem.Key;
+                        catalogItem.FileName = dynamicCatalogItem.FileName;
+
+                        objectRequest.Key = catalogItem.Key;
+                    };
+
+                    var file = storageClient.GetObjectAsync(objectRequest).Result;
+
+                    if (file.ContentLength > 0)
+                    {
+                        file.WriteResponseStreamToFileAsync(
+                            @$"/home/ubuntu/playlist/{catalogItem.FileName}", false, new CancellationToken()).Wait();
+                    }
+                    else
+                    {
+                        File.AppendAllText("/home/ubuntu/log.txt", $"File failed to load: {catalogItem.FileName}");
+
                         continue;
                     }
 
-                    objectRequest.Key = GetDynamicDevotionKey();
-                };
+                    var playlistLog = new StreamWriter("/home/ubuntu/playlist.txt");
+                    playlistLog.WriteLine($"{catalogItem.FileName}\t\t\t${DateTime.Now}");
 
-                var file = storageClient.GetObjectAsync(objectRequest).Result;
+                    //File.AppendAllText("/home/ubuntu/playlist.txt", $"{catalogItem.FileName}\n");
 
-                if (file.ContentLength > 0)
-                {
-                    file.WriteResponseStreamToFileAsync(
-                        @$"/home/ubuntu/playlist/{catalogItem.FileName}", false, new CancellationToken()).Wait();
+                    var args = $"-re -i \"/home/ubuntu/playlist/{catalogItem.FileName}\" -vcodec libx264 -preset ultrafast -maxrate 3000k -b:v 2500k -bufsize 600k -pix_fmt yuv420p -g 60 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -s 1280x720 rtmp://{ipAddress.ToString()}/live/stream";
+
+                    Console.WriteLine(args);
+
+                    //process.StartInfo.Arguments = $"-re -i \"{file}\" -c:v copy -c:a aac -ar 44100 -ac 1 -f flv rtmp://localhost/live/stream";
+                    process.StartInfo.Arguments = args;
+                    process.Start();
+
+                    process.WaitForExit();
+
+                    File.Delete(Path.Combine(playlistDirectory.FullName, catalogItem.FileName));
+
+                    // maybe check here for existing connections instead of a different thread
+                    //CheckConnections();
                 }
-                else
+                catch(Exception ex)
                 {
-                    File.AppendAllText("/home/ubuntu/log.txt", $"File failed to load: {catalogItem.FileName}");
-
-                    continue;
+                    File.AppendAllText("/home/ubuntu/log.txt", $"ERROR: {ex}, FILENAME: {catalogItem.FileName}");
                 }
-
-                var playlistLog = new StreamWriter("/home/ubuntu/playlist.txt");
-                playlistLog.WriteLine($"{catalogItem.FileName}\t\t\t${DateTime.Now}");
-
-                //File.AppendAllText("/home/ubuntu/playlist.txt", $"{catalogItem.FileName}\n");
-
-                var args = $"-re -i \"/home/ubuntu/playlist/{catalogItem.FileName}\" -vcodec libx264 -preset ultrafast -maxrate 3000k -b:v 2500k -bufsize 600k -pix_fmt yuv420p -g 60 -c:a aac -b:a 160k -ac 2 -ar 44100 -f flv -s 1280x720 rtmp://{ipAddress.ToString()}/live/stream";
-
-                Console.WriteLine(args);
-
-                //process.StartInfo.Arguments = $"-re -i \"{file}\" -c:v copy -c:a aac -ar 44100 -ac 1 -f flv rtmp://localhost/live/stream";
-                process.StartInfo.Arguments = args;
-                process.Start();
-
-                process.WaitForExit();
-
-                File.Delete(Path.Combine(playlistDirectory.FullName, catalogItem.FileName));
-
-                // maybe check here for existing connections instead of a different thread
-                //CheckConnections();
             }
         }
 
-        string GetDynamicDevotionKey()
+        CatalogItem GetDynamicDevotionKey()
         {
             var key = String.Empty;
+            var filename = String.Empty;
+
             var month = String.Empty;
             var day = String.Empty;
 
@@ -531,6 +540,7 @@ namespace Frontlets.Media.Server
                 //    && c.FileName.Substring(morningPrefixLength, 2) == day);
 
                 key = $"{DEVOTIONS_1}/{morningPrefix}-{month}.{day}.am.mp4";
+                filename = $"{morningPrefix}-{month}.{day}.am.mp4";
             }
             else if (DateTime.Now.Hour > 12)
             {
@@ -542,9 +552,15 @@ namespace Frontlets.Media.Server
                 //    && c.FileName.Substring(eveningPrefixLength + 1, 2) == day);
 
                 key = $"{DEVOTIONS_1}/{eveningPrefix}-{month}.{day}.pm.mp4";
+                filename = $"{eveningPrefix}-{month}.{day}.am.mp4";
             }
 
-            return key;
+            return new CatalogItem()
+            {
+                Type = DYNAMIC_DEVOTION,
+                Key = key,
+                FileName = filename
+            };
         }
     }
 }
