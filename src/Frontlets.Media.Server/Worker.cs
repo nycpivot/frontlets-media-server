@@ -530,7 +530,7 @@ namespace Frontlets.Media.Server
                 //    c => c.FileName.StartsWith(startsWithText)
                 //    && c.FileName.Substring(morningPrefixLength, 2) == day);
 
-                key = $"{DEVOTIONS_1}/{morningPrefix}-{month}-{day}.am.mp4";
+                key = $"{DEVOTIONS_1}/{morningPrefix}-{month}.{day}.am.mp4";
             }
             else if (DateTime.Now.Hour > 12)
             {
@@ -541,7 +541,7 @@ namespace Frontlets.Media.Server
                 //    c => c.FileName.StartsWith(startsWithText)
                 //    && c.FileName.Substring(eveningPrefixLength + 1, 2) == day);
 
-                key = $"{DEVOTIONS_1}/{eveningPrefix}-{month}-{day}.pm.mp4";
+                key = $"{DEVOTIONS_1}/{eveningPrefix}-{month}.{day}.pm.mp4";
             }
 
             return key;
