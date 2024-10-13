@@ -182,14 +182,14 @@ namespace Frontlets.Media.Server
                 AddChapters(chapters, skip, take);
             }
 
-            foreach(var item in playlist)
-            {
-                if(String.IsNullOrWhiteSpace(item.FileName))
-                {
-                    Debugger.Break();
-                }
-                Debug.WriteLine(item.FileName);
-            }
+            //foreach(var item in playlist)
+            //{
+            //    if(String.IsNullOrWhiteSpace(item.FileName))
+            //    {
+            //        Debugger.Break();
+            //    }
+            //    Debug.WriteLine(item.FileName);
+            //}
 
             //// MOVE KJV CHRISTOPHER 5 FILES AT A TIME
             //for (int ctr = 0; ctr < catalog.Count; ctr++)
@@ -454,9 +454,9 @@ namespace Frontlets.Media.Server
                         var dynamicCatalogItem = GetDynamicDevotionKey();
                         catalogItem.Key = dynamicCatalogItem.Key;
                         catalogItem.FileName = dynamicCatalogItem.FileName;
-
-                        objectRequest.Key = catalogItem.Key;
                     };
+
+                    objectRequest.Key = catalogItem.Key;
 
                     var file = storageClient.GetObjectAsync(objectRequest).Result;
 
