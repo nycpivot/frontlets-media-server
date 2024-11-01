@@ -228,8 +228,8 @@ namespace Frontlets.Media.Server
         void AddChapters(List<CatalogItem> chapters, int skip, int take)
         {
             var batch = chapters.Skip(skip).Take(take);
-            
-            foreach(var chapter in batch)
+
+            foreach (var chapter in batch)
             {
                 MoveToPlaylist(chapter);
             }
@@ -507,52 +507,36 @@ namespace Frontlets.Media.Server
             var month = String.Empty;
             var day = String.Empty;
 
-            if (DateTime.Now.Month >= 1 && DateTime.Now.Month <= 9)
+            if (DateTime.Today.Month >= 1 && DateTime.Today.Month <= 9)
             {
-                month = $"0{DateTime.Now.Month}";
+                month = $"0{DateTime.Today.Month}";
             }
-            else if (DateTime.Now.Month >= 10)
+            else if (DateTime.Today.Month >= 10)
             {
-                month = DateTime.Now.Month.ToString();
+                month = DateTime.Today.Month.ToString();
             }
 
-            if (DateTime.Now.Day >= 1 && DateTime.Now.Day <= 9)
+            if (DateTime.Today.Day >= 1 && DateTime.Today.Day <= 9)
             {
-                day = $"0{DateTime.Now.Day}";
+                day = $"0{DateTime.Today.Day}";
             }
-            else if (DateTime.Now.Day >= 10)
+            else if (DateTime.Today.Day >= 10)
             {
-                day = DateTime.Now.Day.ToString();
+                day = DateTime.Today.Day.ToString();
             }
 
             var morningPrefix = "spurgeon-morning";
             var eveningPrefix = "spurgeon-evening";
 
-            var catalogItem = new CatalogItem();
-
             if (DateTime.Now.Hour <= 12)
             {
-                //var startsWithText = $"{morningPrefix}-{month}";
-                //var morningPrefixLength = startsWithText.Length;
-
-                //catalogItem = catalog.Single(
-                //    c => c.FileName.StartsWith(startsWithText)
-                //    && c.FileName.Substring(morningPrefixLength, 2) == day);
-
                 key = $"{DEVOTIONS_1}/{morningPrefix}-{month}.{day}.am.mp4";
                 filename = $"{morningPrefix}-{month}.{day}.am.mp4";
             }
             else if (DateTime.Now.Hour > 12)
             {
-                //var startsWithText = $"{eveningPrefix}-{month}";
-                //var eveningPrefixLength = startsWithText.Length;
-
-                //catalogItem = catalog.Single(
-                //    c => c.FileName.StartsWith(startsWithText)
-                //    && c.FileName.Substring(eveningPrefixLength + 1, 2) == day);
-
                 key = $"{DEVOTIONS_1}/{eveningPrefix}-{month}.{day}.pm.mp4";
-                filename = $"{eveningPrefix}-{month}.{day}.am.mp4";
+                filename = $"{eveningPrefix}-{month}.{day}.pm.mp4";
             }
 
             return new CatalogItem()
