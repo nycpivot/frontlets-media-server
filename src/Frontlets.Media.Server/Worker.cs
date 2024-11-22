@@ -89,7 +89,7 @@ namespace Frontlets.Media.Server
                 KJV_CHRISTOPHER_NT,
                 //KJV_ALEXANDER_SCOURBY,
                 //KJV_AUDIO_TREASURE,
-                DEVOTIONS_1,
+                //DEVOTIONS_1,
                 DEVOTIONS_2,
                 CLASSICAL_1,
                 CLASSICAL_2,
@@ -133,10 +133,10 @@ namespace Frontlets.Media.Server
                 .OrderBy(f => f.FileName)
                 .ToList();
 
-            var devotions1 = storage.Where(s => s.Type == DEVOTIONS_1)
-                .Select(s => new CatalogItem() { Type = DEVOTIONS, Key = s.Key, FileName = s.FileName })
-                .OrderBy(f => f.FileName)
-                .ToList();
+            //var devotions1 = storage.Where(s => s.Type == DEVOTIONS_1)
+            //    .Select(s => new CatalogItem() { Type = DEVOTIONS, Key = s.Key, FileName = s.FileName })
+            //    .OrderBy(f => f.FileName)
+            //    .ToList();
 
             var devotions2 = storage.Where(s => s.Type == DEVOTIONS_2)
                 .Select(s => new CatalogItem() { Type = DEVOTIONS, Key = s.Key, FileName = s.FileName })
@@ -161,7 +161,7 @@ namespace Frontlets.Media.Server
 
             catalog.AddRange(kjvChristopherFilesOt);
             catalog.AddRange(kjvChristopherFilesNt);
-            catalog.AddRange(devotions1);
+            //catalog.AddRange(devotions1);
             catalog.AddRange(devotions2);
             catalog.AddRange(classical1);
             catalog.AddRange(classical2);
@@ -181,48 +181,6 @@ namespace Frontlets.Media.Server
 
                 AddChapters(chapters, skip, take);
             }
-
-            //foreach(var item in playlist)
-            //{
-            //    if(String.IsNullOrWhiteSpace(item.FileName))
-            //    {
-            //        Debugger.Break();
-            //    }
-            //    Debug.WriteLine(item.FileName);
-            //}
-
-            //// MOVE KJV CHRISTOPHER 5 FILES AT A TIME
-            //for (int ctr = 0; ctr < catalog.Count; ctr++)
-            //{
-            //    var catalogItem = catalog[ctr];
-            //    var bookNumber = FileHelper.GetBookNumber(catalogItem.FileName);
-
-
-
-
-            //    var counter = ctr + 1;
-
-            //    //var kjvChristopherFile = new FileInfo(kjvChristopherFiles[kjv1].FullName);
-
-            //    MoveToPlaylist(catalogItem);
-
-            //    var chapterCount = FileHelper.ChaptersToRead(catalogItem.FileName);
-
-            //    if (counter % chapterCount == 0)
-            //    {
-            //        //AddHymns(3);
-            //        //AddDevotions(1);
-
-            //        AddClassical(8);
-            //        //AddTreasure(1);
-            //        //AddHymns(8);
-            //        //AddDevotions(1);
-            //        //AddMiscellaneous(1);
-            //        //AddScourby(1);
-            //        //AddMasterpiece(1);
-            //        //AddHymns(2);
-            //    }
-            //}
         }
 
         void AddChapters(List<CatalogItem> chapters, int skip, int take)
