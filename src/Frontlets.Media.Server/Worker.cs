@@ -99,6 +99,7 @@ namespace Frontlets.Media.Server
             };
 
             storage.Clear();
+            catalog.Clear();
             playlist.Clear();
 
             foreach (var container in containers)
